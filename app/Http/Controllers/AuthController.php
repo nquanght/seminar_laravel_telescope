@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\WriteLogEvent;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
     public function index()
     {
-        $users = User::all();
+        $users = User::all()->toArray();
 
         return response()->json($users);;
     }
@@ -24,22 +26,27 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $dataAdd = $request->toArray();
-        $dataAdd['password'] = bcrypt($dataAdd['password']);
+        $newUser = DB::transaction(function () use ($request) {
+            $dataAdd = $request->toArray();
+            $dataAdd['password'] = bcrypt($dataAdd['password']);
 
-        $userModel = new User();
-        $userModel->fill($dataAdd);
-        $userModel->save();
+            $userModel = new User();
+            $userModel->fill($dataAdd);
+            $userModel->save();
 
-        return response()->json($userModel);
+            return $userModel->toArray();
+        });
+
+        event(new WriteLogEvent($newUser));
+
+        return response()->json($newUser);
     }
 
     public function show($id)
     {
-        $foundUser = User::find($id);
+        $foundUser = User::find($id)->toArray();
 
-//        Call Log
-//        Log::critical('Cannot find this user: '.$id);
+        event(new WriteLogEvent($foundUser));
 
         return response()->json($foundUser);
     }
@@ -52,20 +59,28 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
-        $dataAdd = $request->toArray();
-        $dataAdd['password'] = bcrypt($dataAdd['password']);
+        $userUpdated = DB::transaction(function () use ($request, $id) {
+            $dataUpdate = $request->toArray();
+            $dataUpdate['password'] = bcrypt($dataUpdate['password']);
 
-        $foundUser = User::find($id);
-        $foundUser->fill($dataAdd);
-        $foundUser->save();
+            $foundUser = User::find($id);
+            $foundUser->fill($dataUpdate);
+            $foundUser->save();
 
-        return response()->json($foundUser);
+            return $foundUser->toArray();
+        });
+
+        event(new WriteLogEvent($userUpdated));
+
+        return response()->json($userUpdated);
     }
 
     public function destroy($id)
     {
         $foundUser = User::find($id);
         $foundUser->delete();
+
+        event(new WriteLogEvent($foundUser));
 
         return response()->json($foundUser);
     }

@@ -19,4 +19,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::resource('user', \App\Http\Controllers\AuthController::class);
+Route::resource('redis', \App\Http\Controllers\RedisController::class);
 
