@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Events\WriteLogEvent;
+use App\Mail\SendMail;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
@@ -33,8 +35,11 @@ class AuthController extends Controller
             $userModel = new User();
             $userModel->fill($dataAdd);
             $userModel->save();
+            $dataNewUser = $userModel->toArray();
 
-            return $userModel->toArray();
+            $this->_sendMail($dataNewUser);
+
+            return $dataNewUser;
         });
 
         event(new WriteLogEvent($newUser));
@@ -83,6 +88,11 @@ class AuthController extends Controller
         event(new WriteLogEvent($foundUser));
 
         return response()->json($foundUser);
+    }
+
+    private function _sendMail($data){
+        $mailReceiver = ['n.nquangh2t@gmail.com', 'n.nquangh3t@gmail.com', env('MAIL_USERNAME')];
+        Mail::to($mailReceiver)->send(new SendMail($data));
     }
 
 }

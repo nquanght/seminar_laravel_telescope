@@ -11,7 +11,7 @@ class RedisController extends Controller
     {
         Redis::set('user_name', 'quang');
         $dataRedis = Redis::get('user_name');
-dd(Redis::get('user_name'));
+
         return response()->json($dataRedis);;
     }
 
