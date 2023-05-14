@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -36,6 +37,9 @@ class AuthController extends Controller
     public function show($id)
     {
         $foundUser = User::find($id);
+
+//        Call Log
+//        Log::critical('Cannot find this user: '.$id);
 
         return response()->json($foundUser);
     }
